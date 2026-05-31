@@ -1,0 +1,22 @@
+BasaltRouter
+Copyright (c) 2026 BasaltRouter
+
+This product is licensed under the Business Source License 1.1 (BSL 1.1).
+On 2030-05-31, or the fourth anniversary of the first public release of
+each version (whichever comes first), the Software converts to the Apache
+License, Version 2.0.
+
+Licensed Work: BasaltRouter (github.com/LevantateLabs/basaltrouter)
+
+Third-Party Notices
+
+This software includes the following third-party components:
+
+- github.com/spf13/viper — MIT License
+- github.com/jackc/pgx/v5 — MIT License
+- github.com/redis/go-redis/v9 — BSD 2-Clause License
+- go.opentelemetry.io/otel — Apache License 2.0
+- github.com/google/uuid — BSD 3-Clause License
+- github.com/golang-migrate/migrate/v4 — MIT License
+
+See each dependency's repository for full license terms.

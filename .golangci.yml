@@ -1,0 +1,18 @@
+run:
+  timeout: 5m
+  tests: true
+
+linters:
+  enable:
+    - errcheck
+    - staticcheck
+    - govet
+    - gofumpt
+
+linters-settings:
+  gofumpt:
+    extra-rules: true
+
+issues:
+  exclude-dirs:
+    - vendor
