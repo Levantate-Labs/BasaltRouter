@@ -1,0 +1,69 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+  packages: write
+
+env:
+  GO_VERSION: "1.22"
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: ghcr.io/basltrouter
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ci.yml
+
+  release:
+    name: release
+    runs-on: ubuntu-latest
+    needs: ci
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push images
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          for svc in gateway api worker; do
+            docker build -f deploy/Dockerfile --build-arg SERVICE=$svc -t ${{ env.IMAGE_PREFIX }}/$svc:$VERSION .
+            docker push ${{ env.IMAGE_PREFIX }}/$svc:$VERSION
+          done
+
+      - name: Build binaries
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          mkdir -p dist
+          for svc in gateway api worker; do
+            GOOS=linux GOARCH=amd64 go build -o dist/${svc}-linux-amd64 ./cmd/${svc}
+            sha256sum dist/${svc}-linux-amd64 > dist/${svc}-linux-amd64.sha256
+          done
+
+      - name: Package Helm chart (stub)
+        run: |
+          mkdir -p dist
+          if [ -f deploy/helm/basltrouter/Chart.yaml ]; then
+            helm package deploy/helm/basltrouter -d dist
+          else
+            echo "Helm chart not yet available — skipping package step"
+          fi
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true

@@ -1,0 +1,125 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: basalt
+      POSTGRES_PASSWORD: basalt
+      POSTGRES_DB: basalt
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U basalt -d basalt"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  gateway:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+      args:
+        SERVICE: gateway
+    ports:
+      - "8080:8080"
+    env_file:
+      - ../.env
+    environment:
+      BASALT_SERVER_PORT: "8080"
+      BASALT_TELEMETRY_SERVICE_NAME: gateway
+      BASALT_DATABASE_DSN: postgres://basalt:basalt@postgres:5432/basalt?sslmode=disable
+      BASALT_REDIS_ADDR: redis:6379
+      BASALT_ENCRYPTION_MODE: local
+      BASALT_ENCRYPTION_LOCAL_KEY_PATH: /app/secrets/local.key
+    volumes:
+      - ../secrets/local.key.example:/app/secrets/local.key:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  api:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+      args:
+        SERVICE: api
+    ports:
+      - "8081:8081"
+    env_file:
+      - ../.env
+    environment:
+      BASALT_SERVER_PORT: "8081"
+      BASALT_TELEMETRY_SERVICE_NAME: api
+      BASALT_DATABASE_DSN: postgres://basalt:basalt@postgres:5432/basalt?sslmode=disable
+      BASALT_REDIS_ADDR: redis:6379
+      BASALT_ENCRYPTION_MODE: local
+      BASALT_ENCRYPTION_LOCAL_KEY_PATH: /app/secrets/local.key
+    volumes:
+      - ../secrets/local.key.example:/app/secrets/local.key:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  worker:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+      args:
+        SERVICE: worker
+    ports:
+      - "8082:8082"
+    env_file:
+      - ../.env
+    environment:
+      BASALT_SERVER_PORT: "8082"
+      BASALT_TELEMETRY_SERVICE_NAME: worker
+      BASALT_DATABASE_DSN: postgres://basalt:basalt@postgres:5432/basalt?sslmode=disable
+      BASALT_REDIS_ADDR: redis:6379
+      BASALT_ENCRYPTION_MODE: local
+      BASALT_ENCRYPTION_LOCAL_KEY_PATH: /app/secrets/local.key
+    volumes:
+      - ../secrets/local.key.example:/app/secrets/local.key:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  pgadmin:
+    profiles: [tools]
+    image: dpage/pgadmin4:latest
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@basalt.local}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
+    ports:
+      - "5050:80"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  redisinsight:
+    profiles: [tools]
+    image: redis/redisinsight:latest
+    ports:
+      - "5540:5540"
+    depends_on:
+      redis:
+        condition: service_healthy
+
+volumes:
+  postgres_data:

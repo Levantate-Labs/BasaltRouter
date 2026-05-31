@@ -1,0 +1,18 @@
+pre-commit:
+  parallel: true
+  commands:
+    fmt:
+      run: go fmt ./... && gofumpt -w .
+    lint:
+      run: golangci-lint run
+    vet:
+      run: go vet ./...
+    test:
+      run: go test ./... -count=1
+
+commit-msg:
+  commands:
+    conventional:
+      run: |
+        MSG=$(cat {1})
+        echo "$MSG" | grep -Eq '^(feat|fix|chore|docs|refactor|perf|test|ci|hotfix|release)(\([a-z0-9_-]+\))?: .+'
