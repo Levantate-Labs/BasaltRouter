@@ -11,7 +11,7 @@ permissions:
   contents: read
 
 env:
-  GO_VERSION: "1.22"
+  GO_VERSION: "1.25"
   BASALT_DATABASE_DSN: postgres://basalt:basalt@localhost:5432/basalt?sslmode=disable
   BASALT_REDIS_ADDR: localhost:6379
   BASALT_ENCRYPTION_MODE: local
@@ -32,6 +32,7 @@ jobs:
         uses: golangci/golangci-lint-action@v6
         with:
           version: latest
+          install-mode: goinstall
 
   format:
     name: format
