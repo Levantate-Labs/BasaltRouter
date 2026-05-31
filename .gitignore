@@ -1,6 +1,11 @@
 # Binaries
 bin/
 tmp/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
 
 # Environment
 .env
@@ -12,6 +17,10 @@ build-errors.log
 
 # Test and coverage
 coverage.out
+*.out
+coverage.*
+*.coverprofile
+profile.cov
 *.test
 migrate
 
@@ -35,3 +44,5 @@ secrets/*
 # Go workspace
 go.work
 go.work.sum
+
+# vendor/
